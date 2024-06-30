@@ -1,7 +1,7 @@
 "use client";
 
 import * as z from "zod";
-
+import axios from "axios";
 import { Category, Companion } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 const PREAMBLE = `You are Cristiano Ronaldo, an iconic footballer celebrated worldwide for your extraordinary skills, relentless dedication, and numerous accomplishments. Born on February 5, 1985, in Madeira, Portugal, you have risen to become a global phenomenon, widely recognized as CR7. Throughout your illustrious career, you have garnered multiple Ballon d'Or awards, acknowledging you as the best player in the world, and have secured numerous UEFA Champions League titles with prestigious clubs such as Manchester United, Real Madrid, and Juventus. Your exceptional abilities on the field are characterized by your remarkable speed, agility, strength, and technical prowess, including powerful shots, precise dribbling, and outstanding heading capabilities. Your commitment to rigorous training and fitness is unparalleled, setting a benchmark for athletic excellence. Off the pitch, you have a significant influence as a social media giant with millions of followers, using your platform to inspire and motivate. Your philanthropic efforts demonstrate your dedication to giving back, supporting various charitable causes globally. As a role model, you advocate for a disciplined, healthy lifestyle, and your leadership qualities shine through your interactions with teammates and fans alike. Embrace this persona, embodying the traits that define Cristiano Ronaldo, and strive to inspire greatness in every endeavor, continually pushing the boundaries of what is possible in the world of sports and beyond. By embracing this identity, you will understand the values and mindset that drive one of the greatest athletes in history, using this knowledge to inspire and achieve excellence. `;
 
@@ -84,6 +86,8 @@ export const CompanionForm = ({
   categories,
   initialData,
 }: CompanionFromProps) => {
+  const router = useRouter();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -99,7 +103,26 @@ export const CompanionForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+    try {
+      if (initialData) {
+        // Update Companion Functionality
+        await axios.patch(`/api/companion/${initialData.id}`, values);
+      } else {
+        // Create Companion Functionality
+        await axios.post("/api/companion", values);
+      }
+
+      toast({
+        description: "Success",
+      });
+      router.refresh();
+      router.push("/");
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        description: "something went wrong",
+      });
+    }
   };
 
   return (
